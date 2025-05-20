@@ -50,11 +50,11 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-4">
-      <Header
-        paciente={{ nombre: "Rodolfo Giacomodonatto", edad: 28, diagnostico: "Lumbalgia crónica" }}
-        tiempoActual={new Date().toLocaleString()}
-        estadoSesion="En curso"
-      />
+    <Header
+      tiempoActual={new Date().toLocaleString()}
+      estadoSesion="En curso"
+    />
+
 
       {data && (
         <>

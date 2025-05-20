@@ -1,29 +1,44 @@
-// src/components/Header.tsx
-import React from "react";
+import { useEffect, useState } from 'react';
 
-interface Props {
-  paciente: {
-    nombre: string;
-    edad: number;
-    diagnostico: string;
-  };
-  tiempoActual: string;
-  estadoSesion: string;
-}
-
-const Header: React.FC<Props> = ({ paciente, tiempoActual, estadoSesion }) => {
-  return (
-    <header className="w-full bg-white shadow p-4 flex justify-between items-center">
-      <div>
-        <h1 className="text-2xl font-bold">🩺 Monitoreo Postural</h1>
-        <p className="text-sm text-gray-600">Paciente: <strong>{paciente.nombre}</strong> ({paciente.edad} años) – {paciente.diagnostico}</p>
-      </div>
-      <div className="text-right">
-        <p className="text-sm text-gray-500">🕒 {tiempoActual}</p>
-        <p className="text-sm text-blue-600 font-medium">Estado: {estadoSesion}</p>
-      </div>
-    </header>
-  );
+type Paciente = {
+  nombre: string;
+  edad: number;
+  sexo: string;
+  diagnostico: string;
 };
 
-export default Header;
+type HeaderProps = {
+  tiempoActual: string;
+  estadoSesion: string;
+};
+
+export default function Header({ tiempoActual, estadoSesion }: HeaderProps) {
+  const [paciente, setPaciente] = useState<Paciente | null>(null);
+
+  useEffect(() => {
+    fetch("http://172.18.0.2:30081/pacientes/")
+      .then(res => res.json())
+      .then(data => {
+        setPaciente(data[0]); // solo el primer paciente por ahora
+      });
+  }, []);
+
+  return (
+    <div className="flex justify-between items-center p-4 border-b bg-white">
+      <div>
+        <h2 className="text-xl font-bold">Monitoreo Postural</h2>
+        {paciente ? (
+          <p>
+            Paciente: <b>{paciente.nombre}</b> ({paciente.edad} años) – {paciente.diagnostico}
+          </p>
+        ) : (
+          <p className="text-gray-500">Cargando paciente...</p>
+        )}
+      </div>
+      <p className="text-sm text-gray-500 text-right">
+        {tiempoActual} <br />
+        <span className="text-blue-500">{estadoSesion}</span>
+      </p>
+    </div>
+  );
+}

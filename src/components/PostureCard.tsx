@@ -22,7 +22,7 @@ const PostureCard: React.FC<Props> = ({ postura }) => {
   }, [postura.actual, prevPostura]);
 
   useEffect(() => {
-    const wsUrl = `ws://${window.location.hostname}:30765/video`;
+    const wsUrl = `ws://${window.location.hostname}:30765/video/output`;
     const ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
 

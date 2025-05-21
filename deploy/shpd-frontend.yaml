@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: shpd-frontend:5.3
+          image: shpd-frontend:8.0
           imagePullPolicy: Never
           ports:
             - containerPort: 80

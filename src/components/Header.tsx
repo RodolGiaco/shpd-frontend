@@ -16,7 +16,7 @@ export default function Header({ tiempoActual, estadoSesion }: HeaderProps) {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
 
   useEffect(() => {
-    fetch("http://172.18.0.2:30081/pacientes/")
+    fetch("http://192.168.194.122:8765/pacientes/")
       .then(res => res.json())
       .then(data => {
         setPaciente(data[0]); // solo el primer paciente por ahora

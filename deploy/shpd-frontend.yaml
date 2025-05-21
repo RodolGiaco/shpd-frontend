@@ -14,8 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: shpd-frontend:8.0
-          imagePullPolicy: Never
+          image: rodolgiaco/shpd-frontend:9.0
           ports:
             - containerPort: 80
           resources:

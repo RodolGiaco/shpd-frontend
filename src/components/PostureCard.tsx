@@ -1,6 +1,6 @@
 // src/components/PostureCard.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { PosturaData, MetricaOut } from "../types";
+import { PosturaData } from "../types";
 import { PieChart, Pie, Cell } from "recharts";
 
 interface Props {
@@ -13,19 +13,19 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
   const [prevPostura, setPrevPostura] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // 1) Fetch de métricas al montar y cuando cambie sesionId
+  // Polling de métricas cada segundo
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:30765/metricas/${sesionId}`)
-      .then(res => res.json())
-      .then((list: MetricaOut[]) => {
-        if (list.length > 0) {
-          setPostura(list[0].datos);
-        }
-      })
-      .catch(console.error);
+    const interval = setInterval(() => {
+      fetch(`http://${window.location.hostname}:8765/metricas/${sesionId}`)
+        .then(res => res.json())
+        .then(data => setPostura(data))
+        .catch(console.error);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [sesionId]);
 
-  // 2) Animación cuando cambia postura.actual
+  // Animación al cambiar postura.actual
   useEffect(() => {
     if (postura && postura.actual !== prevPostura) {
       setAnimar(true);
@@ -35,11 +35,9 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
     }
   }, [postura, prevPostura]);
 
-  // 3) WebSocket para el canvas de video
+  // WebSocket para streaming de video
   useEffect(() => {
-    const ws = new WebSocket(
-      `ws://192.168.100.3:8765/video/output`
-    );
+    const ws = new WebSocket(`ws://${window.location.hostname}:8765/video/output`);
     ws.binaryType = "arraybuffer";
 
     ws.onmessage = event => {
@@ -88,27 +86,31 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Métricas / PostureCard */}
       <div
-        className={`p-4 bg-blue-50 border border-blue-200 rounded-lg shadow space-y-2 transition-all duration-500 ring-2 ${
+        className={`p-4 bg-blue-50 border border-blue-200 rounded-lg shadow space-y-4 transition-all duration-500 ring-2 ${
           postura ? getCardRing(postura.porcentaje_incorrecta) : "ring-gray-300"
         }`}
       >
-        <h2 className="text-2xl font-extrabold">🧍‍♂️ Postura Actual</h2>
-
+        {/* Contenedor alineado a la izquierda */}
         {!postura ? (
-          // Mostramos loading si aún no hay datos
           <p className="p-4 text-gray-500">Cargando métricas…</p>
         ) : (
           <>
-            <p
-              className={`text-xl font-bold text-blue-700 transition-all duration-500 ${
-                animar ? "scale-105 animate-pulse" : ""
-              }`}
-            >
-              {postura.actual}
-            </p>
+            <div className="flex flex-col items-start text-left space-y-1">
+              <h2 className="text-2xl font-extrabold flex items-center gap-2">
+                <span role="img" aria-label="postura">🧍‍♂️</span>
+                Postura Actual
+              </h2>
+              <p
+                className={`text-xl font-bold text-blue-700 transition-all duration-500 break-words ${
+                  animar ? "scale-105 animate-pulse" : ""
+                }`}
+              >
+                {postura.actual.replace(/_/g, " ")}
+              </p>
+            </div>
+
             <p className="text-gray-700">
-              Transiciones a mala postura:{" "}
-              <strong>{postura.transiciones_malas}</strong>
+              Transiciones a mala postura: <strong>{postura.transiciones_malas}</strong>
             </p>
 
             <div className="flex flex-col items-start gap-2 max-w-[320px]">
@@ -144,8 +146,7 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
 
             <div className="text-gray-800 space-y-1">
               <p>
-                🪑 Sentado: {postura.tiempo_sentado}s / 🧍 Parado:{" "}
-                {postura.tiempo_parado}s
+                🪑 Sentado: {postura.tiempo_sentado}s / 🧍 Parado: {postura.tiempo_parado}s
               </p>
               <p className="text-rose-600">
                 🚨 Alertas: {postura.alertas_enviadas}

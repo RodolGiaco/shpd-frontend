@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: rodolgiaco/shpd-frontend:9.0
+          image: rodolgiaco/shpd-frontend:1.1.0
+      
           ports:
             - containerPort: 80
           resources:

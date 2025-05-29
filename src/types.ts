@@ -14,16 +14,15 @@
   }
   
   export interface SessionData {
+    id: string;
     intervalo_segundos: number;
     tiempo_transcurrido: number;
     modo: string;
   }
   
-  export interface SessionData {
-    id: string;               // ← lo nuevo
+  export interface SessionProgressData {
     intervalo_segundos: number;
-    tiempo_transcurrido: number;
-    modo: string; 
+    elapsed: number; 
   }
 
   export interface PosturaMessage {
@@ -37,8 +36,8 @@
   export interface MetricaOut {
     id: string;
     sesion_id: string;
-    timestamp: string;      // o Date si lo transformas en front
+    timestamp: string;   
     datos: PosturaData;
-    created_at: string;     // o Date
+    created_at: string; 
   }
   

@@ -146,7 +146,7 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
 
             <div className="text-gray-800 space-y-1">
               <p>
-                🪑 Sentado: {postura.tiempo_sentado}s / 🧍 Parado: {postura.tiempo_parado}s
+                🪑 Sentado: {postura.tiempo_sentado.toFixed(1)}s / 🧍 Parado: {postura.tiempo_parado.toFixed(1)}s
               </p>
               <p className="text-rose-600">
                 🚨 Alertas: {postura.alertas_enviadas}

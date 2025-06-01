@@ -1,7 +1,7 @@
 // src/components/PostureCard.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { PosturaData } from "../types";
 import { PieChart, Pie, Cell } from "recharts";
+import { PosturaData, AnalysisResponse } from "../types";
 
 interface Props {
   sesionId: string;
@@ -9,38 +9,74 @@ interface Props {
 
 const PostureCard: React.FC<Props> = ({ sesionId }) => {
   const [postura, setPostura] = useState<PosturaData | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [animar, setAnimar] = useState(false);
-  const [prevPostura, setPrevPostura] = useState<string>("");
+  const [prevHighestLabel, setPrevHighestLabel] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Polling de métricas cada segundo
   useEffect(() => {
     const interval = setInterval(() => {
       fetch(`http://${window.location.hostname}:8765/metricas/${sesionId}`)
-        .then(res => res.json())
-        .then(data => setPostura(data))
+        .then((res) => res.json())
+        .then((data) => setPostura(data))
         .catch(console.error);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [sesionId]);
 
-  // Animación al cambiar postura.actual
+  // Polling de análisis cada segundo
   useEffect(() => {
-    if (postura && postura.actual !== prevPostura) {
-      setAnimar(true);
-      setPrevPostura(postura.actual);
-      const timeout = setTimeout(() => setAnimar(false), 1200);
-      return () => clearTimeout(timeout);
+    const interval = setInterval(() => {
+      fetch(`http://${window.location.hostname}:8765/analysis/${sesionId}`)
+        .then((res) => res.json())
+        .then((data: AnalysisResponse) => setAnalysis(data))
+        .catch(console.error);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sesionId]);
+
+  // Helper: devuelve la postura con el valor más alto
+  const getHighestPosture = (
+    analysis: AnalysisResponse
+  ): { label: string; value: number } | null => {
+    const entries = Object.entries(analysis);
+    if (entries.length === 0) return null;
+
+    let maxLabel = entries[0][0];
+    let maxValue = entries[0][1];
+    for (const [label, value] of entries) {
+      if (value > maxValue) {
+        maxValue = value;
+        maxLabel = label;
+      }
     }
-  }, [postura, prevPostura]);
+    return { label: maxLabel, value: maxValue };
+  };
+
+  // Animación cuando cambie la postura con mayor %. 
+  useEffect(() => {
+    if (analysis) {
+      const highest = getHighestPosture(analysis);
+      if (highest && highest.label !== prevHighestLabel) {
+        setAnimar(true);
+        setPrevHighestLabel(highest.label);
+        const timeout = setTimeout(() => setAnimar(false), 1200);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [analysis, prevHighestLabel]);
 
   // WebSocket para streaming de video
   useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.hostname}:8765/video/output`);
+    const ws = new WebSocket(
+      `ws://${window.location.hostname}:8765/video/output`
+    );
     ws.binaryType = "arraybuffer";
 
-    ws.onmessage = event => {
+    ws.onmessage = (event) => {
       const blob = new Blob([event.data], { type: "image/jpeg" });
       const img = new Image();
       img.src = URL.createObjectURL(blob);
@@ -82,6 +118,9 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
       ? "⚠️ Riesgo moderado"
       : "✅ Riesgo bajo";
 
+  // Computar la postura con mayor porcentaje
+  const highest = analysis ? getHighestPosture(analysis) : null;
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Métricas / PostureCard */}
@@ -90,27 +129,31 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
           postura ? getCardRing(postura.porcentaje_incorrecta) : "ring-gray-300"
         }`}
       >
-        {/* Contenedor alineado a la izquierda */}
         {!postura ? (
           <p className="p-4 text-gray-500">Cargando métricas…</p>
         ) : (
           <>
             <div className="flex flex-col items-start text-left space-y-1">
               <h2 className="text-2xl font-extrabold flex items-center gap-2">
-                <span role="img" aria-label="postura">🧍‍♂️</span>
-                Postura Actual
+                <span role="img" aria-label="posture">
+                  🧍‍♂️
+                </span>
+                Last Detected Posture
               </h2>
               <p
                 className={`text-xl font-bold text-blue-700 transition-all duration-500 break-words ${
                   animar ? "scale-105 animate-pulse" : ""
                 }`}
               >
-                {postura.actual.replace(/_/g, " ")}
+                {highest
+                  ? highest.label
+                  : "Waiting for alert"}
               </p>
             </div>
 
             <p className="text-gray-700">
-              Transiciones a mala postura: <strong>{postura.transiciones_malas}</strong>
+              Transiciones a mala postura:{" "}
+              <strong>{postura.transiciones_malas}</strong>
             </p>
 
             <div className="flex flex-col items-start gap-2 max-w-[320px]">
@@ -146,7 +189,8 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
 
             <div className="text-gray-800 space-y-1">
               <p>
-                🪑 Sentado: {postura.tiempo_sentado.toFixed(1)}s / 🧍 Parado: {postura.tiempo_parado.toFixed(1)}s
+                🪑 Sentado: {postura.tiempo_sentado.toFixed(1)}s / 🧍 Parado:{" "}
+                {postura.tiempo_parado.toFixed(1)}s
               </p>
               <p className="text-rose-600">
                 🚨 Alertas: {postura.alertas_enviadas}

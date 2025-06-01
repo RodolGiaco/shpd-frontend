@@ -40,4 +40,6 @@
     datos: PosturaData;
     created_at: string; 
   }
-  
+  export interface AnalysisResponse {
+    [label: string]: number;
+  }

@@ -1,28 +1,12 @@
-import { useEffect, useState } from 'react';
-
-type Paciente = {
-  nombre: string;
-  edad: number;
-  sexo: string;
-  diagnostico: string;
-};
+import { Paciente } from '../types'; // Importar el tipo centralizado
 
 type HeaderProps = {
+  paciente: Paciente | null; // Aceptar el paciente como prop
   tiempoActual: string;
   estadoSesion: string;
 };
 
-export default function Header({ tiempoActual, estadoSesion }: HeaderProps) {
-  const [paciente, setPaciente] = useState<Paciente | null>(null);
-
-  useEffect(() => {
-    fetch("http://192.168.100.3:8765/pacientes/")
-      .then(res => res.json())
-      .then(data => {
-        setPaciente(data[0]); // solo el primer paciente por ahora
-      });
-  }, []);
-
+export default function Header({ paciente, tiempoActual, estadoSesion }: HeaderProps) {
   return (
     <div className="flex justify-between items-center p-4 border-b bg-white">
       <div>

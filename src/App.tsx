@@ -4,6 +4,7 @@ import {
   SessionData,
   SessionProgressData,
   HistorialPosturalItem,
+  Paciente,
 } from "./types";
 import PostureCard from "./components/PostureCard";
 import SessionInfo from "./components/SessionInfo";
@@ -15,6 +16,8 @@ import PostureTimelineTable from "./components/PostureTimelineTable";
 export default function App() {
   const [session, setSession] = useState<SessionData | null>(null);
   const [progress, setProgress] = useState<SessionProgressData | null>(null);
+  const [paciente, setPaciente] = useState<Paciente | null>(null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
 
   // Datos para la tabla de timeline
   const tablaResumen = [
@@ -31,7 +34,36 @@ export default function App() {
     conteo: item.tiempo_mala_postura,
   }));
 
-  // 1) Obtener la sesión activa
+  // 1) Obtener el device_id de la URL al cargar
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("device_id");
+    if (id) {
+      setDeviceId(id);
+    } else {
+      console.error("No se encontró 'device_id' en la URL.");
+    }
+  }, []);
+
+  // 2) Obtener datos del paciente cuando el deviceId esté disponible
+  useEffect(() => {
+    if (!deviceId) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`http://${window.location.hostname}:8765/pacientes/${deviceId}`);
+        if (!res.ok) {
+          throw new Error(`Error al obtener paciente: ${res.statusText}`);
+        }
+        const data: Paciente = await res.json();
+        setPaciente(data);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [deviceId]);
+
+  // 3) Obtener la sesión activa
   useEffect(() => {
     (async () => {
       try {
@@ -39,6 +71,7 @@ export default function App() {
           `http://${window.location.hostname}:8765/sesiones/`
         );
         const sessions: SessionData[] = await res.json();
+        if (sessions.length > 0) {
         const last = sessions[sessions.length - 1];
         setSession({
           id: last.id,
@@ -46,13 +79,14 @@ export default function App() {
           modo: last.modo,
           tiempo_transcurrido: 0,
         });
+        }
       } catch (err) {
         console.error("Error al obtener sesión:", err);
       }
     })();
   }, []);
 
-  // 2) Polling de progreso desde Redis vía backend
+  // 4) Polling de progreso desde Redis vía backend
   useEffect(() => {
     if (!session) return;
 
@@ -74,6 +108,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-gray-100 p-4">
       <Header
+        paciente={paciente}
         tiempoActual={new Date().toLocaleString()}
         estadoSesion={session?.modo ?? "—"}
       />

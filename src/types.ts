@@ -32,6 +32,16 @@
     historial_postural: HistorialPosturalItem[];
   }
   
+  export interface Paciente {
+    id: number;
+    telegram_id: string;
+    device_id: string;
+    nombre: string;
+    edad: number;
+    sexo: string | null;
+    diagnostico: string | null;
+  }
+
   // Añade esto:
   export interface MetricaOut {
     id: string;

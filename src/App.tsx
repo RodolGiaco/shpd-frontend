@@ -18,6 +18,7 @@ export default function App() {
   const [progress, setProgress] = useState<SessionProgressData | null>(null);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   // Datos para la tabla de timeline
   const tablaResumen = [
@@ -97,6 +98,9 @@ export default function App() {
         );
         const data: SessionProgressData = await res.json();
         setProgress(data);
+        if (data && data.elapsed >= data.intervalo_segundos) {
+          setSessionEnded(true);
+        }
       } catch (err) {
         console.error("Error al obtener progreso de sesión:", err);
       }
@@ -104,6 +108,44 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [session]);
+
+  useEffect(() => {
+    if (sessionEnded && deviceId) {
+      fetch(`http://${window.location.hostname}:8765/sesiones/end/${deviceId}`, {
+        method: "POST",
+      })
+        .then(res => res.json())
+        .then(data => {
+          // Opcional: mostrar un toast o mensaje de éxito
+          console.log("Sesión finalizada y reporte enviado:", data);
+        })
+        .catch(err => {
+          // Opcional: mostrar un toast o mensaje de error
+          console.error("Error al finalizar sesión:", err);
+        });
+    }
+  }, [sessionEnded, deviceId]);
+
+  if (sessionEnded) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-green-100 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl px-8 py-10 flex flex-col items-center max-w-md w-full animate-fade-in">
+          <div className="text-6xl mb-4 animate-bounce">🎉</div>
+          <h2 className="text-3xl font-extrabold text-green-700 mb-2 text-center">¡Sesión finalizada!</h2>
+          <p className="text-gray-700 mb-6 text-center">
+            ¡Felicitaciones por completar tu sesión de monitoreo postural!<br/>
+            Puedes revisar tus métricas o iniciar una nueva sesión cuando lo desees.
+          </p>
+          <button
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-full shadow-lg hover:scale-105 hover:from-green-500 hover:to-blue-500 transition-all duration-300 text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-blue-200"
+            onClick={() => window.location.reload()}
+          >
+            <span className="mr-2">🔄</span> Iniciar nueva sesión
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-100 p-4">

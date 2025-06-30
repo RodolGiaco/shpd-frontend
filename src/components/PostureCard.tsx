@@ -173,15 +173,15 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
                 </PieChart>
                 <div>
                   <p className="text-green-600">
-                    ✅ Correcta: {postura.porcentaje_correcta.toFixed(1)}%
+                    ✅ Correcta: {postura && typeof postura.porcentaje_correcta === 'number' ? postura.porcentaje_correcta.toFixed(1) : '0.0'}%
                   </p>
-                  <p className={getColor(postura.porcentaje_incorrecta)}>
-                    ❌ Incorrecta: {postura.porcentaje_incorrecta.toFixed(1)}%
+                  <p className={getColor(postura && typeof postura.porcentaje_incorrecta === 'number' ? postura.porcentaje_incorrecta : 0)}>
+                    ❌ Incorrecta: {postura && typeof postura.porcentaje_incorrecta === 'number' ? postura.porcentaje_incorrecta.toFixed(1) : '0.0'}%
                   </p>
                 </div>
               </div>
-              <p className={`text-sm ${getColor(postura.porcentaje_incorrecta)}`}>
-                {riesgo(postura.porcentaje_incorrecta)}
+              <p className={`text-sm ${getColor(postura && typeof postura.porcentaje_incorrecta === 'number' ? postura.porcentaje_incorrecta : 0)}`}>
+                {riesgo(postura && typeof postura.porcentaje_incorrecta === 'number' ? postura.porcentaje_incorrecta : 0)}
               </p>
             </div>
 
@@ -189,11 +189,10 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
 
             <div className="text-gray-800 space-y-1">
               <p>
-                🪑 Sentado: {postura.tiempo_sentado.toFixed(1)}s / 🧍 Parado:{" "}
-                {postura.tiempo_parado.toFixed(1)}s
+                🪑 Sentado: {postura && typeof postura.tiempo_sentado === 'number' ? postura.tiempo_sentado.toFixed(1) : '0.0'}s / 🧍 Parado: {postura && typeof postura.tiempo_parado === 'number' ? postura.tiempo_parado.toFixed(1) : '0.0'}s
               </p>
               <p className="text-rose-600">
-                🚨 Alertas: {postura.alertas_enviadas}
+                🚨 Alertas: {postura && typeof postura.alertas_enviadas === 'number' ? postura.alertas_enviadas : 0}
               </p>
             </div>
           </>

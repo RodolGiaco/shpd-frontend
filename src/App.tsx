@@ -91,6 +91,11 @@ export default function App() {
   useEffect(() => {
     if (!session) return;
 
+    // Cuando se inicia una nueva sesión, borro la marca de finalización
+    if (deviceId) {
+      localStorage.removeItem(`session_ended_${deviceId}`);
+    }
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch(
@@ -107,15 +112,20 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [session]);
+  }, [session, deviceId]);
 
+  // --- Evitar doble reporte usando localStorage ---
   useEffect(() => {
     if (sessionEnded && deviceId) {
+      // Verifica si ya se envió el reporte
+      if (localStorage.getItem(`session_ended_${deviceId}`) === "true") return;
+
       fetch(`http://${window.location.hostname}:8765/sesiones/end/${deviceId}`, {
         method: "POST",
       })
         .then(res => res.json())
         .then(data => {
+          localStorage.setItem(`session_ended_${deviceId}`, "true");
           // Opcional: mostrar un toast o mensaje de éxito
           console.log("Sesión finalizada y reporte enviado:", data);
         })

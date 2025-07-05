@@ -137,6 +137,24 @@ export default function App() {
   }, [sessionEnded, deviceId]);
 
   if (sessionEnded) {
+    const handleRestartSession = async () => {
+      if (!session || !deviceId) return;
+      try {
+        const res = await fetch(`http://${window.location.hostname}:8765/sesiones/reiniciar/${session.id}?device_id=${deviceId}`, {
+          method: "POST",
+        });
+        const data = await res.json();
+        if (data.ok) {
+          localStorage.removeItem(`session_ended_${deviceId}`);
+          setSessionEnded(false);
+          setProgress(null);
+        } else {
+          alert("Error al reiniciar la sesión: " + (data.message || ""));
+        }
+      } catch (err) {
+        alert("Error de red al reiniciar la sesión");
+      }
+    };
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-green-100 p-4">
         <div className="bg-white rounded-2xl shadow-2xl px-8 py-10 flex flex-col items-center max-w-md w-full animate-fade-in">
@@ -148,7 +166,7 @@ export default function App() {
           </p>
           <button
             className="px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-full shadow-lg hover:scale-105 hover:from-green-500 hover:to-blue-500 transition-all duration-300 text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-blue-200"
-            onClick={() => window.location.reload()}
+            onClick={handleRestartSession}
           >
             <span className="mr-2">🔄</span> Iniciar nueva sesión
           </button>

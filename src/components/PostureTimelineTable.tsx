@@ -26,7 +26,7 @@ const PostureTimelineTable: React.FC<Props> = ({ data }) => {
         <tbody>
           {data.map((entry, i) => (
             <tr key={i} className="border-t">
-              <td className="py-1 px-3">{entry.timestamp}</td>
+              <td className="py-1 px-3">{new Date(`1970-01-01T${entry.timestamp}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
               <td className="py-1 px-3">{entry.postura}</td>
               <td className={`py-1 px-3 ${entry.tiempo_mala_postura > 0 ? "text-rose-600 font-medium" : "text-gray-700"}`}>
                 {entry.tiempo_mala_postura}

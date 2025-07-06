@@ -53,3 +53,9 @@
   export interface AnalysisResponse {
     [label: string]: number;
   }
+
+  export interface TimelineEntry {
+    timestamp: string;
+    postura: string;
+    tiempo_mala_postura: number;
+  }

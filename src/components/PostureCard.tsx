@@ -125,12 +125,16 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Métricas / PostureCard */}
       <div
-        className={`p-4 bg-blue-50 border border-blue-200 rounded-lg shadow space-y-4 transition-all duration-500 ring-2 ${
-          postura ? getCardRing(postura.porcentaje_incorrecta) : "ring-gray-300"
-        }`}
+        className={`flex flex-col justify-center p-4 bg-blue-50 border border-blue-200 rounded-lg shadow space-y-4 transition-all duration-500 ring-2 ${
+          postura ? getCardRing(postura.porcentaje_incorrecta ?? 0) : "ring-gray-300"
+        } min-h-[280px]`}
       >
-        {!postura ? (
-          <p className="p-4 text-gray-500">Cargando métricas…</p>
+        {!postura || !postura.actual ? (
+          <div className="flex flex-col items-center justify-center text-center w-full h-full bg-blue-100 border border-blue-200 rounded-md">
+            <span className="text-4xl mb-2">📷</span>
+            <h2 className="text-lg font-semibold text-blue-800">Esperando detectar a una persona…</h2>
+            <p className="text-sm text-blue-600 mt-1">Colócate dentro del encuadre.</p>
+          </div>
         ) : (
           <>
             <div className="flex flex-col items-start text-left space-y-1">
@@ -145,9 +149,7 @@ const PostureCard: React.FC<Props> = ({ sesionId }) => {
                   animar ? "scale-105 animate-pulse" : ""
                 }`}
               >
-                {highest
-                  ? highest.label
-                  : "Waiting for alert"}
+                {highest ? highest.label : "Waiting for alert"}
               </p>
             </div>
 

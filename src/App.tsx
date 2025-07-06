@@ -5,6 +5,7 @@ import {
   SessionProgressData,
   HistorialPosturalItem,
   Paciente,
+  TimelineEntry,
 } from "./types";
 import PostureCard from "./components/PostureCard";
 import SessionInfo from "./components/SessionInfo";
@@ -20,20 +21,29 @@ export default function App() {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [sessionEnded, setSessionEnded] = useState(false);
 
-  // Datos para la tabla de timeline
-  const tablaResumen = [
-    { timestamp: "00:01", postura: "sentado erguido", tiempo_mala_postura: 0 },
-    { timestamp: "00:02", postura: "mentón en mano", tiempo_mala_postura: 15 },
-    { timestamp: "00:03", postura: "slouching", tiempo_mala_postura: 45 },
-    { timestamp: "00:04", postura: "inclinación hacia adelante", tiempo_mala_postura: 75 },
-    { timestamp: "00:05", postura: "sentado erguido", tiempo_mala_postura: 0 },
-  ];
+  // --- Historial Postural real desde backend ---
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
 
-  // Convertir tablaResumen para HistoryChart (HistorialPosturalItem[])
-  const chartData: HistorialPosturalItem[] = tablaResumen.map(item => ({
-    nombre: item.postura,
-    conteo: item.tiempo_mala_postura,
-  }));
+  // Fetch timeline entries
+  useEffect(() => {
+    if (!session) return;
+
+    const fetchTimeline = async () => {
+      try {
+        const res = await fetch(
+          `http://${window.location.hostname}:8765/timeline/${session.id}`
+        );
+        const data: TimelineEntry[] = await res.json();
+        setTimeline(data);
+      } catch (err) {
+        console.error("Error al obtener timeline:", err);
+      }
+    };
+
+    fetchTimeline();
+    const idInt = setInterval(fetchTimeline, 3000);
+    return () => clearInterval(idInt);
+  }, [session]);
 
   // 1) Obtener el device_id de la URL al cargar
   useEffect(() => {
@@ -148,10 +158,11 @@ export default function App() {
           localStorage.removeItem(`session_ended_${deviceId}`);
           setSessionEnded(false);
           setProgress(null);
+          // Opcional: limpiar otros estados si es necesario
         } else {
           alert("Error al reiniciar la sesión: " + (data.message || ""));
         }
-      } catch (err) {
+      } catch {
         alert("Error de red al reiniciar la sesión");
       }
     };
@@ -204,7 +215,7 @@ export default function App() {
                   tiempo_transcurrido: progress.elapsed,
                 }}
               />
-              <PostureTimelineTable data={tablaResumen} />
+              <PostureTimelineTable data={timeline} />
             </div>
           </div>
         </>

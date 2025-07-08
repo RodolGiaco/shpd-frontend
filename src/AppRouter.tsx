@@ -3,19 +3,25 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import App from "./App";
 import CalibracionPage from "./pages/CalibracionPage";
 
-const Protector: React.FC = () => {
+const Decision: React.FC = () => {
   const location = useLocation();
-  // Redirige todo a /calibracion preservando la query
-  return (
-    <Navigate to={`/calibracion${location.search}`} replace />
-  );
+  const params = new URLSearchParams(location.search);
+  const force = params.get("forceCalib") === "1";
+  const calibrado = !force && localStorage.getItem("calibrado") === "1";
+
+  if (calibrado) {
+    return <App />; // interfaz normal
+  }
+
+  // No calibrado: redirige a /calibracion conservando query
+  return <Navigate to={`/calibracion${location.search}`} replace />;
 };
 
 const AppRouter: React.FC = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/calibracion" element={<CalibracionPage />} />
-      <Route path="/*" element={<Protector />} />
+      <Route path="/*" element={<Decision />} />
     </Routes>
   </BrowserRouter>
 );

@@ -20,6 +20,7 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
   const [enMarco, setEnMarco] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [finalizando, setFinalizando] = useState(false);
+  const [modoCambiado, setModoCambiado] = useState(false);
 
   // Obtener device_id de la URL
   const [deviceId] = useState(() => {
@@ -92,6 +93,23 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
     return () => clearInterval(interval);
   }, [calibrando, sessionId]);
 
+  /* —— Cambiar modo a normal apenas finalizamos —— */
+  useEffect(() => {
+    if (finalizando && !modoCambiado) {
+      (async () => {
+        try {
+          await fetch(
+            `http://${window.location.hostname}:8765/calib/mode/${deviceId}/normal`,
+            { method: "POST" }
+          );
+          setModoCambiado(true);
+        } catch {
+          // ignorar errores; el botón permitirá reintentar
+        }
+      })();
+    }
+  }, [finalizando, modoCambiado, deviceId]);
+
   if (!calibrando && !finalizando) {
     // calibración ya terminó y mensaje final se cerró
     return null;
@@ -103,14 +121,15 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
         Calibración de dispositivo
       </h1>
 
-      {/* Marco */}
-      <div className="relative w-[28rem] h-[28rem] flex items-center justify-center">
-        <div
-          className={`absolute inset-0 border-4 rounded-xl transition-colors duration-300 ${
-            enMarco ? "border-green-400" : "border-blue-300"
-          }`}
-        />
-        <canvas ref={canvasRef} width={420} height={420} className="rounded object-cover" />
+      {/* Bloque de video y marco sólo mientras calibramos */}
+      {calibrando && (
+        <div className="relative w-[28rem] h-[28rem] flex items-center justify-center">
+          <div
+            className={`absolute inset-0 border-4 rounded-xl transition-colors duration-300 ${
+              enMarco ? "border-green-400" : "border-blue-300"
+            }`}
+          />
+          <canvas ref={canvasRef} width={420} height={420} className="rounded object-cover" />
 
         {/* Anillo de progreso */}
         {progreso > 0 && progreso < 100 && (
@@ -129,6 +148,7 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
           </svg>
         )}
       </div>
+      )}
 
       {/* Mensajes */}
       {!enMarco && (
@@ -140,18 +160,25 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
         <p className="mt-4 text-blue-600">Calibrando… {Math.floor(progreso)}%</p>
       )}
       {progreso >= 100 && finalizando && (
-        <div className="flex flex-col items-center mt-4 text-green-600">
-          <span className="text-3xl mb-2">✅</span>
-          <p className="font-medium text-center">
-            Dispositivo calibrado correctamente.
-            <br />Presiona "Iniciar sesión" para comenzar el monitoreo.
+        <div className="flex flex-col items-center mt-4 bg-white/70 backdrop-blur-md px-8 py-10 rounded-xl shadow-xl border border-green-200 max-w-md">
+          <span className="text-5xl mb-4">🎉</span>
+          <h2 className="text-2xl font-semibold text-green-700 mb-2 text-center">¡Calibración completada!</h2>
+          <p className="text-gray-700 text-center mb-6">
+            Ahora reinicia el dispositivo para salir del modo de calibración.
+            <br />Una vez reiniciado, pulsa el botón para comenzar la sesión normal.
           </p>
           <button
-            onClick={() => {
-              // localStorage.setItem("calibrado", "1");
-              window.location.replace("/" + window.location.search);
+            onClick={async () => {
+              // Si por algún motivo aún no se cambió, reintenta
+              onFinish?.();
+              // Redirigir a la página principal sin ?calibracion=1
+              const url = new URL(window.location.href);
+              url.searchParams.delete("calibracion");
+              url.searchParams.delete("forceCalib");
+              url.pathname = "/"; // raíz
+              window.location.href = url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : "");
             }}
-            className="mt-4 px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow-lg hover:scale-105 transition-all duration-300 text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-green-200"
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-full shadow-lg hover:scale-105 transition-all duration-300 text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-green-200"
           >
             🏁 Iniciar sesión
           </button>

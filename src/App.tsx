@@ -137,7 +137,7 @@ export default function App() {
         .then(data => {
           localStorage.setItem(`session_ended_${deviceId}`, "true");
           // Borra calibrado para forzar calibración en la próxima sesión
-          // localStorage.removeItem("calibrado");
+          localStorage.removeItem("calibrado");
           // Opcional: mostrar un toast o mensaje de éxito
           console.log("Sesión finalizada y reporte enviado:", data);
         })

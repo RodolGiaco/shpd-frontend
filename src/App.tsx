@@ -149,24 +149,17 @@ export default function App() {
   }, [sessionEnded, deviceId]);
 
   if (sessionEnded) {
-    const handleRestartSession = async () => {
-      if (!session || !deviceId) return;
-      try {
-        const res = await fetch(`http://${window.location.hostname}:8765/sesiones/reiniciar/${session.id}?device_id=${deviceId}`, {
-          method: "POST",
-        });
-        const data = await res.json();
-        if (data.ok) {
-          localStorage.removeItem(`session_ended_${deviceId}`);
-          setSessionEnded(false);
-          setProgress(null);
-          // Opcional: limpiar otros estados si es necesario
-        } else {
-          alert("Error al reiniciar la sesión: " + (data.message || ""));
-        }
-      } catch {
-        alert("Error de red al reiniciar la sesión");
-      }
+    const handleRestartSession = () => {
+      if (!deviceId) return;
+      // Borro cualquier marca y redirijo inmediatamente. El reinicio de backend se maneja en segundo plano.
+      localStorage.removeItem(`session_ended_${deviceId}`);
+
+      // Llamo al backend pero no bloqueo la navegación por la respuesta
+      fetch(`http://${window.location.hostname}:8765/sesiones/reiniciar/${session?.id ?? ""}?device_id=${deviceId}`,
+        { method: "POST" }
+      ).catch(() => {/* silenciar error, se mostrará en próximo ciclo si falla */});
+
+      window.location.href = `/calibracion?device_id=${deviceId}`;
     };
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-green-100 p-4">

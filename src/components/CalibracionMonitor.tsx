@@ -28,8 +28,25 @@ const CalibracionMonitor: React.FC<Props> = ({ onFinish, autoStart = true }) => 
     return p.get("device_id") || "demo";
   });
 
-  // Tomamos session_id directamente de la URL
-  const sessionId = new URLSearchParams(window.location.search).get("session_id");
+  // Obtenemos session_id de la URL; si no está, lo pediremos al backend
+  const [sessionId, setSessionId] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get("session_id")
+  );
+
+  // Si no hay sessionId, consultamos la última sesión asociada al device
+  useEffect(() => {
+    if (sessionId || !deviceId) return;
+    (async () => {
+      try {
+        const res = await fetch(`http://${window.location.hostname}:8765/sesiones/?device_id=${deviceId}`);
+        if (!res.ok) return;
+        const sesiones: { id: string; modo: string }[] = await res.json();
+        if (sesiones.length > 0) {
+          setSessionId(sesiones[sesiones.length - 1].id.toString());
+        }
+      } catch {/* ignorar */}
+    })();
+  }, [sessionId, deviceId]);
 
   /* —— Video WebSocket —— */
   useEffect(() => {

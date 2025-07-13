@@ -215,14 +215,15 @@ useEffect(() => {
 graph TD
     A[Tiempo transcurrido >= intervalo] --> B[Marcar sesión como finalizada]
     B --> C{¿Ya se notificó al backend?}
-    C -->|No| D[POST /sesiones/end/{device_id}]
-    C -->|Sí| E[Evitar duplicado]
+    C -- No --> D[POST /sesiones/end/{device_id}]
+    C -- Sí --> E[Evitar duplicado]
     D --> F[Guardar marca en localStorage]
     F --> G[Limpiar estado de calibración]
     G --> H[Mostrar pantalla de fin]
     H --> I{¿Usuario reinicia?}
-    I -->|Sí| J[POST /sesiones/reiniciar]
+    I -- Sí --> J[POST /sesiones/reiniciar]
     J --> K[Redirigir a calibración]
+    I -- No --> L[Fin]
 ```
 
 ---
